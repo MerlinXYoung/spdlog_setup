@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.3)
 
 # project variables
-project(spdlog_setup VERSION 0.3.1 LANGUAGES CXX)
+project(spdlog_setup VERSION 0.3.3 LANGUAGES CXX)
 set(SPDLOG_MIN_VERSION "1.0.0")
 set(CPPTOML_MIN_VERSION "0.1.0")
 
@@ -74,9 +74,15 @@ target_include_directories(spdlog_setup
     $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/include>
     $<INSTALL_INTERFACE:include>)
 
-target_link_libraries(spdlog_setup
-  INTERFACE
-    spdlog)
+if(TARGET spdlog::spdlog_header_only)
+  target_link_libraries(spdlog_setup
+    INTERFACE
+      spdlog::spdlog_header_only)
+else()
+  target_link_libraries(spdlog_setup
+      INTERFACE
+      spdlog)
+endif()
 
 if(SPDLOG_SETUP_INSTALL)
   install(TARGETS spdlog_setup EXPORT spdlog_setup)

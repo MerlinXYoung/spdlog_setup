@@ -143,6 +143,12 @@ enum class sink_type {
 
     /** Represents msvc_sink_mt */
     MSVCSinkMt,
+
+    /** Represents tcp_sink_st */
+    TcpSinkSt,
+
+    /** Represents tcp_sink_mt */
+    TcpSinkMt,
 };
 
 /**
@@ -199,6 +205,9 @@ static constexpr auto THREAD_POOL = "thread_pool";
 static constexpr auto TRUNCATE = "truncate";
 static constexpr auto TYPE = "type";
 static constexpr auto VALUE = "value";
+static constexpr auto HOST = "host";
+static constexpr auto PORT = "port";
+static constexpr auto LAZY_CONNECT = "lazy_connect";
 } // namespace names
 
 const std::unordered_map<std::string, sync_type> SYNC_MAP{{
@@ -635,6 +644,8 @@ inline auto sink_type_from_str(const std::string &type) -> sink_type {
 #endif
         {"msvc_sink_st", sink_type::MSVCSinkSt},
         {"msvc_sink_mt", sink_type::MSVCSinkMt},
+        {"tcp_sink_st", sink_type::TcpSinkSt},
+        {"tcp_sink_mt", sink_type::TcpSinkMt},
     };
 
     return find_value_from_map(
@@ -886,6 +897,49 @@ auto setup_syslog_sink(const std::shared_ptr<cpptoml::table> &sink_table)
 
 #endif
 
+template <class TcpSink>
+auto setup_tcp_sink(const std::shared_ptr<cpptoml::table> &sink_table)
+    -> std::shared_ptr<spdlog::sinks::sink> {
+
+    using names::HOST;
+    using names::PORT;
+    using names::LAZY_CONNECT;
+
+    // fmt
+    using fmt::format;
+
+    // std
+    using std::make_shared;
+    using std::string;
+
+    const auto host = value_from_table<string>(
+        sink_table,
+        HOST,
+        format(
+            "Missing '{}' field of string value for tcp_sink",
+            HOST));
+
+    // // must create the directory before creating the sink
+    // create_parent_dir_if_present(sink_table, base_filename);
+
+    const auto port = value_from_table<uint32_t>(
+        sink_table,
+        PORT,
+        format(
+            "Missing '{}' field of string value for tcp_sink",
+            PORT));
+
+    const auto lazy_connect = value_from_table<bool>(
+        sink_table,
+        LAZY_CONNECT,
+        format(
+            "Missing '{}' field of string value for tcp_sink",
+            LAZY_CONNECT));
+
+    return make_shared<TcpSink>(
+        host, port, lazy_connect);
+}
+
 inline auto sink_from_sink_type(
     const sink_type sink_val, const std::shared_ptr<cpptoml::table> &sink_table)
     -> std::shared_ptr<spdlog::sinks::sink> {
@@ -991,6 +1045,12 @@ inline auto sink_from_sink_type(
     case sink_type::MSVCSinkMt:
         return make_shared<msvc_sink_mt>();
 #endif
+
+    case sink_type::TcpSinkSt:
+        return make_shared<tcp_sink_st>();
+
+    case sink_type::TcpSinkMt:
+        return make_shared<tcp_sink_mt>();
 
     default:
         throw setup_error(format(

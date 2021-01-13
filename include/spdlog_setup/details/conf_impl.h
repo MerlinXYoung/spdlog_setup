@@ -18,6 +18,7 @@
 
 // Just so that it works for v1.3.0
 #include "spdlog/spdlog.h"
+#include <spdlog/cfg/helpers.h>
 
 // To support all asynchronous loggers
 #include "spdlog/async.h"
@@ -1593,5 +1594,35 @@ inline void setup(const std::shared_ptr<cpptoml::table> &config) {
     // set up loggers, setting the respective sinks and patterns
     setup_loggers(config, sinks_map, patterns_map, thread_pools_map);
 }
+
+inline void load_levels(const std::shared_ptr<cpptoml::table> &config) {
+    using names::LOGGER_TABLE;
+    using names::NAME;
+    using names::LEVEL;
+    // std
+    using std::string;
+
+    const auto loggers = config->get_table_array(LOGGER_TABLE);
+
+    if (!loggers) {
+        throw setup_error("No loggers configured for set-up");
+    }
+
+    string levels="off";
+    for (const auto &logger_table : *loggers) {
+        // levels += load_logger_level(logger_table);
+        auto name = value_from_table_opt<string>(logger_table, NAME);
+        if(!name)
+            throw setup_error("logger no name!");
+
+        auto level = value_from_table_opt<string>(logger_table, LEVEL);
+        if(level)
+            levels += "," + *name + "=" + *level;
+        // else
+
+    }
+    spdlog::cfg::helpers::load_levels(levels);
+}
+
 } // namespace details
 } // namespace spdlog_setup

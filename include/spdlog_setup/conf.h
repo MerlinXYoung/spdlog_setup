@@ -46,6 +46,8 @@ auto from_file_and_override_with_tag_replacement(
  */
 void from_file(const std::string &toml_path);
 
+void levels_from_file(const std::string &toml_path);
+
 /**
  * Performs spdlog configuration setup from both base and override files. The
  * base file is required while the override file is optional.
@@ -177,6 +179,20 @@ inline void from_file(const std::string &toml_path) {
     try {
         const auto config = cpptoml::parse_file(toml_path);
         details::setup(config);
+    } catch (const exception &e) {
+        throw setup_error(e.what());
+    }
+}
+
+inline void levels_from_file(const std::string &toml_path)
+{
+    // std
+    using std::exception;
+    using std::string;
+
+    try {
+        const auto config = cpptoml::parse_file(toml_path);
+        details::load_levels(config);
     } catch (const exception &e) {
         throw setup_error(e.what());
     }

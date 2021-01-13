@@ -228,14 +228,14 @@ static constexpr auto FULL_CONF = R"x(
     name = "tcp_st"
     type = "tcp_sink_st"
     host = "127.0.0.1"
-    port = 60001
+    port = 61001
     level = "debug"
 
     [[sink]]
     name = "udp_st"
     type = "udp_sink_st"
     host = "127.0.0.1"
-    port = 60002
+    port = 61002
     level = "debug"
 
     [[pattern]]

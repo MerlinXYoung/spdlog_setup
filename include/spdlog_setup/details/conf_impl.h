@@ -984,7 +984,7 @@ auto setup_udp_sink(const std::shared_ptr<cpptoml::table> &sink_table)
         sink_table,
         HOST,
         format(
-            "Missing '{}' field of string value for tcp_sink",
+            "Missing '{}' field of string value for udp_sink",
             HOST));
 
     // // must create the directory before creating the sink
@@ -994,7 +994,7 @@ auto setup_udp_sink(const std::shared_ptr<cpptoml::table> &sink_table)
         sink_table,
         PORT,
         format(
-            "Missing '{}' field of string value for tcp_sink",
+            "Missing '{}' field of string value for udp_sink",
             PORT));
 
 

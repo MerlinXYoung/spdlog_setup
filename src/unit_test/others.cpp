@@ -127,6 +127,15 @@ TEST_CASE("Parse TOML file for set-up", "[from_file]") {
 
     console_logger->info("Console Message - Info!");
     console_logger->error("Console Message - Error!");
+
+    spdlog_setup::levels_from_file(tmp_file.get_file_path());
+
+    root_logger->trace("Test Message1 - Trace!");
+    root_logger->debug("Test Message1 - Debug!");
+    root_logger->info("Test Message1 - Info!");
+    root_logger->warn("Test Message1 - Warn!");
+    root_logger->error("Test Message1 - Error!");
+    root_logger->critical("Test Message1 - Critical!");
 }
 
 TEST_CASE(

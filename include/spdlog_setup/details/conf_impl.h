@@ -31,6 +31,7 @@
 #include "spdlog/sinks/sink.h"
 #include "spdlog/sinks/stdout_sinks.h"
 #include "spdlog/sinks/tcp_sink.h"
+#include "spdlog/sinks/udp_sink.h"
 
 #ifdef _WIN32
 #include "spdlog/sinks/msvc_sink.h"
@@ -150,6 +151,12 @@ enum class sink_type {
 
     /** Represents tcp_sink_mt */
     TcpSinkMt,
+
+    /** Represents udp_sink_st */
+    UdpSinkSt,
+
+    /** Represents udp_sink_mt */
+    UdpSinkMt,
 };
 
 /**
@@ -648,6 +655,8 @@ inline auto sink_type_from_str(const std::string &type) -> sink_type {
         {"msvc_sink_mt", sink_type::MSVCSinkMt},
         {"tcp_sink_st", sink_type::TcpSinkSt},
         {"tcp_sink_mt", sink_type::TcpSinkMt},
+        {"udp_sink_st", sink_type::UdpSinkSt},
+        {"udp_sink_mt", sink_type::UdpSinkMt},
     };
 
     return find_value_from_map(
@@ -953,6 +962,46 @@ auto setup_tcp_sink(const std::shared_ptr<cpptoml::table> &sink_table)
     return make_shared<TcpSink>(cfg);
 }
 
+template <class UdpSink>
+auto setup_udp_sink(const std::shared_ptr<cpptoml::table> &sink_table)
+    -> std::shared_ptr<spdlog::sinks::sink> {
+
+    using names::HOST;
+    using names::PORT;
+
+    // fmt
+    using fmt::format;
+
+    // std
+    using std::make_shared;
+    using std::string;
+
+    using spdlog::sinks::udp_sink_config;
+    
+
+    const auto host = value_from_table<string>(
+        sink_table,
+        HOST,
+        format(
+            "Missing '{}' field of string value for tcp_sink",
+            HOST));
+
+    // // must create the directory before creating the sink
+    // create_parent_dir_if_present(sink_table, base_filename);
+
+    const auto port = value_from_table<uint32_t>(
+        sink_table,
+        PORT,
+        format(
+            "Missing '{}' field of string value for tcp_sink",
+            PORT));
+
+
+    udp_sink_config cfg{host, (int)port};
+
+    return make_shared<UdpSink>(cfg);
+}
+
 inline auto sink_from_sink_type(
     const sink_type sink_val, const std::shared_ptr<cpptoml::table> &sink_table)
     -> std::shared_ptr<spdlog::sinks::sink> {
@@ -976,6 +1025,8 @@ inline auto sink_from_sink_type(
     using spdlog::sinks::stdout_sink_st;
     using spdlog::sinks::tcp_sink_mt;
     using spdlog::sinks::tcp_sink_st;
+    using spdlog::sinks::udp_sink_mt;
+    using spdlog::sinks::udp_sink_st;
 
     // std
     using std::make_shared;
@@ -1066,6 +1117,12 @@ inline auto sink_from_sink_type(
 
     case sink_type::TcpSinkMt:
         return setup_tcp_sink<tcp_sink_mt>(sink_table);
+
+    case sink_type::UdpSinkSt:
+        return setup_udp_sink<udp_sink_st>(sink_table);
+
+    case sink_type::UdpSinkMt:
+        return setup_udp_sink<udp_sink_mt>(sink_table);
 
     default:
         throw setup_error(format(

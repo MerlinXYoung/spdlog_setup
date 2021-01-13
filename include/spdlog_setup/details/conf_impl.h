@@ -30,6 +30,7 @@
 #include "spdlog/sinks/rotating_file_sink.h"
 #include "spdlog/sinks/sink.h"
 #include "spdlog/sinks/stdout_sinks.h"
+#include "spdlog/sinks/tcp_sink.h"
 
 #ifdef _WIN32
 #include "spdlog/sinks/msvc_sink.h"
@@ -201,6 +202,7 @@ static constexpr auto SINKS = "sinks";
 static constexpr auto SYNC = "sync";
 static constexpr auto SYSLOG_FACILITY = "syslog_facility";
 static constexpr auto SYSLOG_OPTION = "syslog_option";
+static constexpr auto ENABLE_FORMATING = "enable_formating";
 static constexpr auto THREAD_POOL = "thread_pool";
 static constexpr auto TRUNCATE = "truncate";
 static constexpr auto TYPE = "type";
@@ -369,7 +371,7 @@ void read_template_file_into_stringstream(
         const auto pre_toml_content = pre_toml_ss.str();
 
         const auto toml_content =
-            format(pre_toml_content, std::forward<Ps>(ps)...);
+            format(pre_toml_content, std::move(ps)...);
 
         toml_ss << toml_content;
     } catch (const exception &e) {
@@ -832,6 +834,8 @@ auto setup_daily_file_sink(const std::shared_ptr<cpptoml::table> &sink_table)
     // std
     using std::make_shared;
     using std::string;
+    
+
 
     const auto base_filename = value_from_table<string>(
         sink_table,
@@ -870,6 +874,7 @@ auto setup_syslog_sink(const std::shared_ptr<cpptoml::table> &sink_table)
     using names::IDENT;
     using names::SYSLOG_FACILITY;
     using names::SYSLOG_OPTION;
+    using names::ENABLE_FORMATING;
 
     // fmt
     using fmt::format;
@@ -892,7 +897,10 @@ auto setup_syslog_sink(const std::shared_ptr<cpptoml::table> &sink_table)
     const auto syslog_facility = value_from_table_or<int32_t>(
         sink_table, SYSLOG_FACILITY, DEFAULT_SYSLOG_FACILITY);
 
-    return make_shared<SyslogSink>(ident, syslog_option, syslog_facility);
+    const auto enable_formatting = value_from_table_or<bool>(
+        sink_table, ENABLE_FORMATING, true);
+
+    return make_shared<SyslogSink>(ident, syslog_option, syslog_facility, enable_formatting);
 }
 
 #endif
@@ -912,6 +920,9 @@ auto setup_tcp_sink(const std::shared_ptr<cpptoml::table> &sink_table)
     using std::make_shared;
     using std::string;
 
+    using spdlog::sinks::tcp_sink_config;
+    
+
     const auto host = value_from_table<string>(
         sink_table,
         HOST,
@@ -929,15 +940,17 @@ auto setup_tcp_sink(const std::shared_ptr<cpptoml::table> &sink_table)
             "Missing '{}' field of string value for tcp_sink",
             PORT));
 
-    const auto lazy_connect = value_from_table<bool>(
+    const auto lazy_connect = value_from_table_or<bool>(
         sink_table,
         LAZY_CONNECT,
-        format(
-            "Missing '{}' field of string value for tcp_sink",
-            LAZY_CONNECT));
+        false);
 
-    return make_shared<TcpSink>(
-        host, port, lazy_connect);
+    tcp_sink_config cfg{host, (int)port};
+    // cfg.server_host = host;
+    // cfg.server_port = port;
+    cfg.lazy_connect = lazy_connect;
+
+    return make_shared<TcpSink>(cfg);
 }
 
 inline auto sink_from_sink_type(
@@ -961,6 +974,8 @@ inline auto sink_from_sink_type(
     using spdlog::sinks::stderr_sink_st;
     using spdlog::sinks::stdout_sink_mt;
     using spdlog::sinks::stdout_sink_st;
+    using spdlog::sinks::tcp_sink_mt;
+    using spdlog::sinks::tcp_sink_st;
 
     // std
     using std::make_shared;
@@ -1047,10 +1062,10 @@ inline auto sink_from_sink_type(
 #endif
 
     case sink_type::TcpSinkSt:
-        return make_shared<tcp_sink_st>();
+        return setup_tcp_sink<tcp_sink_st>(sink_table);
 
     case sink_type::TcpSinkMt:
-        return make_shared<tcp_sink_mt>();
+        return setup_tcp_sink<tcp_sink_mt>(sink_table);
 
     default:
         throw setup_error(format(

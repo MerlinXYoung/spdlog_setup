@@ -37,7 +37,7 @@ template <class... Ps>
 auto from_file_and_override_with_tag_replacement(
     const std::string &base_pre_toml_path,
     const std::string &override_pre_toml_path,
-    const Ps &... ps) -> bool;
+    Ps &&... ps) -> bool;
 
 /**
  * Performs spdlog configuration setup from file.
@@ -122,7 +122,7 @@ template <class... Ps>
 auto from_file_and_override_with_tag_replacement(
     const std::string &base_pre_toml_path,
     const std::string &override_pre_toml_path,
-    const Ps &... ps) -> bool {
+     Ps &&... ps) -> bool {
 
     // std
     using std::exception;
@@ -132,8 +132,10 @@ auto from_file_and_override_with_tag_replacement(
     using std::stringstream;
 
     try {
+        // auto t_ps = std::make_tuple(std::forward<>(ps)...);
+        // auto t_ps1 = t_ps;
         stringstream base_toml_ss;
-
+        // std::apply(details::read_template_file_into_stringstream, std::move(t_ps));
         details::read_template_file_into_stringstream(
             base_toml_ss, base_pre_toml_path, ps...);
 

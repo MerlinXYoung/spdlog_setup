@@ -224,6 +224,20 @@ static constexpr auto FULL_CONF = R"x(
     name = "syslog_mt"
     type = "syslog_sink_mt"
 
+    [[sink]]
+    name = "tcp_st"
+    type = "tcp_sink_st"
+    host = "127.0.0.1"
+    port = 60001
+    level = "debug"
+
+    [[sink]]
+    name = "udp_st"
+    type = "udp_sink_st"
+    host = "127.0.0.1"
+    port = 60002
+    level = "debug"
+
     [[pattern]]
     name = "succient"
     value = "%c-%L: %v"

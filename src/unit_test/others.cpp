@@ -133,12 +133,12 @@ TEST_CASE(
     "Parse pre-TOML file for set-up", "[from_file_with_tag_replacement]") {
     spdlog::drop_all();
 
-    const auto index_arg = arg("index", 123);
-    const auto path_arg = arg("path", "spdlog_setup");
-    const auto tmp_file = get_pre_conf_tmp_file();
+     auto index_arg = arg("index", 123);
+     auto path_arg = arg("path", "spdlog_setup");
+     auto tmp_file = get_pre_conf_tmp_file();
 
     spdlog_setup::from_file_with_tag_replacement(
-        tmp_file.get_file_path(), index_arg, path_arg);
+        tmp_file.get_file_path(), std::move(index_arg), std::move(path_arg));
 
     const auto root_logger = spdlog::get("root");
     REQUIRE(root_logger != nullptr);
@@ -204,9 +204,9 @@ TEST_CASE(
     "[from_file_with_override_with_tag_replacement]") {
     spdlog::drop_all();
 
-    const auto index_arg = arg("index", 123);
-    const auto path_arg = arg("path", "spdlog_setup");
-    const auto hash_arg = arg("hash", "qwerty");
+    auto index_arg = arg("index", 123);
+    auto path_arg = arg("path", "spdlog_setup");
+    auto hash_arg = arg("hash", "qwerty");
 
     const auto pre_conf_tmp_file = get_pre_conf_tmp_file();
     const auto override_pre_conf_tmp_file = get_override_pre_conf_tmp_file();
@@ -215,9 +215,9 @@ TEST_CASE(
         spdlog_setup::from_file_and_override_with_tag_replacement(
             pre_conf_tmp_file.get_file_path(),
             override_pre_conf_tmp_file.get_file_path(),
-            index_arg,
-            path_arg,
-            hash_arg);
+            std::move(index_arg),
+            std::move(path_arg),
+            std::move(hash_arg));
 
     REQUIRE(use_override);
 
@@ -237,8 +237,8 @@ TEST_CASE(
     "[from_file_with_missing_override_with_tag_replacement]") {
     spdlog::drop_all();
 
-    const auto index_arg = arg("index", 123);
-    const auto path_arg = arg("path", "spdlog_setup");
+    auto index_arg = arg("index", 123);
+    auto path_arg = arg("path", "spdlog_setup");
 
     const auto pre_conf_tmp_file = get_pre_conf_tmp_file();
 
@@ -246,8 +246,8 @@ TEST_CASE(
         spdlog_setup::from_file_and_override_with_tag_replacement(
             pre_conf_tmp_file.get_file_path(),
             "no_such_file",
-            index_arg,
-            path_arg);
+            std::move(index_arg),
+            std::move(path_arg));
 
     REQUIRE(!use_override);
 

@@ -5,6 +5,9 @@ project(spdlog_setup VERSION 0.3.3 LANGUAGES CXX)
 set(SPDLOG_MIN_VERSION "1.0.0")
 set(CPPTOML_MIN_VERSION "0.1.0")
 
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED True)
+
 #---------------------------------------------------------------------------------------
 # Set SPDLOG_SETUP_MASTER_PROJECT to ON if we are building spdlog_setup
 #---------------------------------------------------------------------------------------
@@ -32,7 +35,7 @@ endif()
 
 option(SPDLOG_SETUP_INSTALL "Generate the install target" ${SPDLOG_SETUP_MASTER_PROJECT})
 
-option(SPDLOG_SETUP_INCLUDE_UNIT_TESTS "Build with unittests" OFF)
+option(SPDLOG_SETUP_INCLUDE_UNIT_TESTS "Build with unittests" ON)
 
 option(SPDLOG_SETUP_CPPTOML_EXTERNAL "Use external CPPTOML library instead of bundled" OFF)
 if(SPDLOG_SETUP_CPPTOML_EXTERNAL)
@@ -48,7 +51,9 @@ add_compile_options("$<$<CONFIG:DEBUG>:${DEBUG_FLAGS}>")
 include(CMakeToolsHelpers OPTIONAL)
 
 if (EXISTS ${CMAKE_SOURCE_DIR}/deps/spdlog/CMakeLists.txt)
+
   add_subdirectory(deps/spdlog)
+  include_directories(${CMAKE_SOURCE_DIR}/deps/spdlog/include)
 else()
   # allow usage of installed dependency
   find_package(spdlog ${SPDLOG_MIN_VERSION} REQUIRED)
@@ -74,21 +79,22 @@ target_include_directories(spdlog_setup
     $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/include>
     $<INSTALL_INTERFACE:include>)
 
-if(TARGET spdlog::spdlog_header_only)
-  target_link_libraries(spdlog_setup
-    INTERFACE
-      spdlog::spdlog_header_only)
-else()
-  target_link_libraries(spdlog_setup
-      INTERFACE
-      spdlog)
-endif()
+# if(TARGET spdlog::spdlog_header_only)
+# message(STATUS "header only")
+#   target_link_libraries(spdlog_setup
+#     INTERFACE
+#       spdlog::spdlog_header_only)
+# else()
+  # target_link_libraries(spdlog_setup
+  #     INTERFACE
+  #     spdlog::spdlog)
+# endif()
 
 if(SPDLOG_SETUP_INSTALL)
   install(TARGETS spdlog_setup EXPORT spdlog_setup)
   install(DIRECTORY include/spdlog_setup DESTINATION include)
 
-  install(EXPORT spdlog_setup
+  install(EXPORT spdlog_setup 
     FILE spdlog_setup-targets.cmake
     NAMESPACE spdlog_setup::
     DESTINATION lib/cmake/spdlog_setup)
